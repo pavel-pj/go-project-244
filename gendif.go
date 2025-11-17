@@ -57,6 +57,44 @@ type DiffItem struct {
 	result string
 }
 
+func GendDiff02(file01, file02 map[string]interface{}) map[string]interface{} {
+
+	result := make(map[string]interface{})
+
+	//merge
+	result2 := mergeRecursive(result, file01)
+	return result2
+}
+
+func mergeRecursive(result map[string]interface{}, file map[string]interface{}) map[string]interface{} {
+	for key, value := range file {
+		if !isMap(value) {
+			result[key] = value
+		} else {
+			// Handle nested map
+			if existing, exists := result[key]; exists && isMap(existing) {
+				// Recursively merge into existing map
+				existingMap := existing.(map[string]interface{})
+				mergeRecursive(existingMap, value.(map[string]interface{}))
+			} else {
+				// Create new nested map
+				nestedResult := make(map[string]interface{})
+				mergeRecursive(nestedResult, value.(map[string]interface{}))
+				result[key] = nestedResult
+			}
+		}
+	}
+	return result
+}
+
+func isMap(value interface{}) bool {
+
+	if _, ok := value.(map[string]interface{}); ok {
+		return true
+	}
+	return false
+}
+
 func GendDiff01(file01, file02 map[string]interface{}) []DiffItem {
 	result := make(map[string][]interface{})
 

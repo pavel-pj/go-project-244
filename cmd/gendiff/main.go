@@ -59,10 +59,10 @@ func main() {
 				return err
 			}
 
-			//fmt.Println(data01)
-			//fmt.Println(data02)
-			diff := gendiff.GendDiff01(data01, data02)
-			fmt.Println(gendiff.Format(diff))
+			fmt.Println(data01)
+			fmt.Println(data02)
+			diff := gendiff.GendDiff02(data01, data02)
+			fmt.Println(diff)
 
 			/*
 				format := cmd.Bool("format")
