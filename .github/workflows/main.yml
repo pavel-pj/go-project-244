@@ -22,13 +22,13 @@ jobs:
 
     - name: Build
       run: |
-        go build -o bin/hexlet-path-size ./cmd/hexlet-path-size/main.go
+        go build -o bin/gendiff ./cmd/gendiff/main.go
         echo "✅ Build completed"
 
     - name: Verify binary
       run: |
-        file bin/hexlet-path-size
-        echo "Binary size: $(du -h bin/hexlet-path-size | cut -f1)"
+        file bin/gendiff
+        echo "Binary size: $(du -h bin/gendiff | cut -f1)"
 
     - name: Test
       run: |
