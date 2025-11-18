@@ -1,0 +1,17 @@
+{
+    "abloak": "BIG",
+    "ibubuga": { "city200":199},
+    "common": {
+    "setting1": "Value 1",
+    "setting2": 200,
+    "artemon":44,
+    "setting3": true,
+    "setting6": {
+        "key": "value",
+        "doge": {
+        "wow": ""
+         }
+        }
+    }
+}
+ 
