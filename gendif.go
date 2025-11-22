@@ -6,12 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-func ParceFile(path string) (map[string]interface{}, error) {
+func parceFile(path string) (map[string]interface{}, error) {
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -51,39 +52,28 @@ func ParceFile(path string) (map[string]interface{}, error) {
 
 }
 
-/*
-func GendDiff02(file01, file02 map[string]interface{}) []DiffItem {
+func GendDiff(file01, file02, format string) (string, error) {
 
-		result := make(map[string]interface{})
-
-		//merge
-		result1 := mergeRecursive(result, file01)
-		result2 := mergeRecursive(result1, file02)
-
-
-		result3 := getUsefulFormat(result2)
-		result4 := getSorted(result3)
-
-		result5 := differ(result4, file01, file02)
-
-		return result5
+	//Парсим файлы
+	data01, err := parceFile(file01)
+	if err != nil {
+		return "", err
 	}
-*/
-func GendDiff03(file01, file02 map[string]interface{}) []DiffItem {
+	data02, err := parceFile(file02)
+	if err != nil {
+		return "", err
+	}
 
 	result := []DiffItem{}
 
 	//merge
-	result1 := mergeRecursive2(result, file01)
-	result2 := mergeRecursive2(result1, file02)
-
-	//result3 := getUsefulFormat(result2)
+	result1 := mergeRecursive(result, data01)
+	result2 := mergeRecursive(result1, data02)
 	result3 := getSorted(result2)
-	return result3
-
-	//result5 := differ(result4, file01, file02)
-
-	//return result5
+	//compare
+	result4 := differ(result3, data01, data02)
+	//format
+	return formater(result4, format), nil
 }
 
 type DiffItem struct {
@@ -93,7 +83,7 @@ type DiffItem struct {
 	children []DiffItem
 }
 
-func mergeRecursive2(result []DiffItem, file map[string]interface{}) []DiffItem {
+func mergeRecursive(result []DiffItem, file map[string]interface{}) []DiffItem {
 	for key, value := range file {
 
 		item := getDiffItem(result, key)
@@ -129,12 +119,12 @@ func mergeRecursive2(result []DiffItem, file map[string]interface{}) []DiffItem 
 		nestedMap := value.(map[string]interface{})
 		if item != nil && len(item.children) > 0 {
 			// Если такой ключ с вложенным значением уже существуе
-			item.children = mergeRecursive2(item.children, nestedMap)
+			item.children = mergeRecursive(item.children, nestedMap)
 			continue
 		}
 
 		//Если папка не существует, создаем ее
-		nestedChilds := mergeRecursive2([]DiffItem{}, nestedMap)
+		nestedChilds := mergeRecursive([]DiffItem{}, nestedMap)
 		result = append(result, DiffItem{
 			key:      key,
 			value:    []interface{}{},
@@ -156,119 +146,6 @@ func getDiffItem(result []DiffItem, key string) *DiffItem {
 	return nil
 }
 
-/*
-//Это решение невозможно, так как невозможно чтобы в map было два одинаковых ключа
-//Даже не рассматривать этот вариант
-
-func mergeRecursive(result map[string]interface{}, file map[string]interface{}) map[string]interface{} {
-	for key, value := range file {
-
-		//==============================================================================
-		// Обработка простых значений
-		if !isMap(value) {
-			//если ключ существует, те был добавлен из первого файла, добавляем в значение  существующий слайс
-			if existedValue, ok := result[key]; ok && !isMap(existedValue) {
-
-				//могут быть одинаковые ключи для простого и вложенного знчаения
-				existingSlice := existedValue.([]interface{})
-				if existingSlice[0] != value {
-					result[key] = append(existingSlice, saveCorrectValues(value))
-				}
-				// Если значения одинаковые - оставляем срез как есть
-				continue
-			}
-
-			// Ключа нет в результате - создаем срез с одним значением
-			result[key] = []interface{}{value}
-
-			continue
-
-		}
-		//==============================================================================
-		// проверяем вложенные данные
-
-		if existedValue, ok := result[key]; ok && isMap(value) {
-
-			// Если такой ключ с вложенным значением уже существуе
-			existingMap := existedValue.(map[string]interface{})
-			mergeRecursive(existingMap, value.(map[string]interface{}))
-			continue
-		}
-
-		//Если папка не существует, создаем ее
-		nestedResult := make(map[string]interface{})
-		mergeRecursive(nestedResult, value.(map[string]interface{}))
-		result[key] = nestedResult
-
-	}
-
-	return result
-}
-*/
-/*
-func mergeRecursive(result map[string]interface{}, file map[string]interface{}) map[string]interface{} {
-	for key, value := range file {
-		if !isMap(value) {
-			// Обработка простых значений
-			if existedValue, ok := result[key]; ok {
-				// Проверяем тип существующего значения
-				switch existing := existedValue.(type) {
-				case []interface{}:
-					// Если уже есть срез - добавляем значение если отличается
-					if existing[0] != value {
-						result[key] = append(existing, value)
-					}
-				case map[string]interface{}:
-					// Если уже есть map - преобразуем в срез
-					result[key] = []interface{}{existing, value}
-				default:
-					// Если одиночное значение - создаем срез
-					if existing != value {
-						result[key] = []interface{}{existing, value}
-					}
-				}
-			} else {
-				// Ключа нет в результате - создаем срез с одним значением
-				result[key] = []interface{}{value}
-			}
-		} else {
-			// Handle nested map
-			if existing, exists := result[key]; exists {
-				// Проверяем тип существующего значения
-				switch existingMap := existing.(type) {
-				case map[string]interface{}:
-					// Recursively merge into existing map
-					mergeRecursive(existingMap, value.(map[string]interface{}))
-				case []interface{}:
-					// Если уже есть срез - нужно проверить можно ли мерджить
-					// Для простоты создаем новую map и мерджим оба значения
-					nestedResult := make(map[string]interface{})
-					// Пытаемся извлечь map из среза и мерджить
-					if len(existingMap) > 0 {
-						if firstMap, ok := existingMap[0].(map[string]interface{}); ok {
-							mergeRecursive(nestedResult, firstMap)
-						}
-					}
-					mergeRecursive(nestedResult, value.(map[string]interface{}))
-					result[key] = []interface{}{nestedResult}
-				default:
-					// Если одиночное значение - создаем новую map
-					nestedResult := make(map[string]interface{})
-					mergeRecursive(nestedResult, value.(map[string]interface{}))
-					result[key] = nestedResult
-				}
-			} else {
-				// Create new nested map
-				nestedResult := make(map[string]interface{})
-				mergeRecursive(nestedResult, value.(map[string]interface{}))
-				result[key] = nestedResult
-			}
-		}
-	}
-	return result
-}
-*/
-
 func isMap(value interface{}) bool {
 
 	if _, ok := value.(map[string]interface{}); ok {
@@ -284,34 +161,6 @@ func saveCorrectValues(value interface{}) interface{} {
 	return value
 }
 
-/*
-	func getUsefulFormat(rawArray map[string]interface{}) []DiffItem {
-		sortedDiff := []DiffItem{}
-
-		for key, value := range rawArray {
-			if slice, ok := value.([]interface{}); ok {
-				// Простой случай
-				sortedDiff = append(sortedDiff, DiffItem{
-					key:    key,
-					value:  slice,
-					result: "",
-				})
-			} else {
-				// Рекурсивный случай
-				nestedMap := value.(map[string]interface{})
-				nestedItems := getUsefulFormat(nestedMap)
-				sortedDiff = append(sortedDiff, DiffItem{
-					key:      key,
-					value:    nil,
-					result:   "",
-					children: nestedItems,
-				})
-			}
-		}
-
-		return sortedDiff
-	}
-*/
 func getSorted(diff []DiffItem) []DiffItem {
 
 	// Сортируем текущий уровень
@@ -378,90 +227,76 @@ func differ(diff []DiffItem, file01 map[string]interface{}, file02 map[string]in
 
 }
 
-func GendDiff01(file01, file02 map[string]interface{}) []DiffItem {
-	result := make(map[string][]interface{})
+func formater(diff []DiffItem, format string) string {
 
-	//merge
-	for k, v := range file01 {
-		result[k] = append(result[k], v)
+	level := 0
+	switch format {
+	case "AAAA":
+
+		return "{\n" + recursiveFormat(diff, level) + "}\n"
+	default:
+		return "{\n" + recursiveFormat(diff, level) + "}\n"
+
 	}
-	for k, v := range file02 {
-		if value, ok := result[k]; ok {
-			if value[0] != v {
-				result[k] = append(result[k], v)
-			}
-		} else {
-			result[k] = append(result[k], v)
-		}
-	}
-
-	sortedDiff := make([]DiffItem, 0, len(result))
-	for k, v := range result {
-		sortedDiff = append(sortedDiff, DiffItem{key: k, value: v, result: ""})
-	}
-	//Сравнение
-
-	for i := range sortedDiff {
-
-		r := &sortedDiff[i]
-
-		_, inFile01 := file01[r.key]
-		_, inFile02 := file02[r.key]
-
-		switch {
-		case inFile01 && inFile02:
-			//Изменено значение
-			if len(r.value) > 1 {
-				r.result = "updated"
-			} else {
-				r.result = "unchanged"
-			}
-		case !inFile01 && inFile02:
-			r.result = "deleted"
-
-		case inFile01 && !inFile02:
-			r.result = "added"
-		}
-	}
-
-	//Сортировка
-	sort.Slice(sortedDiff, func(i, j int) bool {
-		return sortedDiff[i].key < sortedDiff[j].key
-	})
-	return sortedDiff
-
-	//for _, item := range sortedDiff {
-	//	fmt.Printf("%s: %v -> %s\n", item.key, item.value, item.result)
-	//}
 
 }
 
-func Format(diff []DiffItem) string {
+func recursiveFormat(diff []DiffItem, curLevel int) string {
 
-	indent := 2
-	symbol := " "
+	step := 4
+	smb := " "
+	indent := ""
 	result := ""
 	for _, r := range diff {
+		//для простых значений
+		if len(r.value) == 1 {
+			indent = strings.Repeat(smb, curLevel*step) + getSymbol(r)
+			result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
+			continue
+		}
+		if len(r.value) == 2 {
+			indent = strings.Repeat(smb, curLevel*step) + getSymbol(r)
+			result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
+			continue
+		}
+		if len(r.children) > 0 {
+			//Для вложенных
+			indent = strings.Repeat(smb, curLevel*step)
 
-		switch r.result {
-		case "unchanged":
-			result += strings.Repeat(symbol, indent*2)
-			result += fmt.Sprintf("%s: %v\n", r.key, r.value)
-		case "added":
-			result += strings.Repeat(symbol, indent) + "+ "
-			result += fmt.Sprintf("%s: %v\n", r.key, r.value)
-		case "deleted":
-			result += strings.Repeat(symbol, indent) + "- "
-			result += fmt.Sprintf("%s: %v\n", r.key, r.value)
-		case "updated":
-			result += strings.Repeat(symbol, indent) + "- "
-			result += fmt.Sprintf("%s: %v\n", r.key, r.value[0])
-			result += strings.Repeat(symbol, indent) + "+ "
-			result += fmt.Sprintf("%s: %v\n", r.key, r.value[1])
-
+			result += indent + getSymbol(r) + r.key + ": {\n"
+			result += recursiveFormat(r.children, curLevel+1)
+			result += indent + strings.Repeat(smb, 2) + "}\n"
 		}
 
 	}
 	return result
+}
 
+func getSymbol(item DiffItem) string {
+	switch item.result {
+	case "new":
+		return "+ "
+	case "deleted":
+		return "- "
+	case "unchanged":
+		return "  "
+	}
+	return "  "
+}
+
+func getValue(value interface{}) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case int:
+		return strconv.Itoa(v)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case bool:
+		return strconv.FormatBool(v)
+	case nil:
+		return "null"
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }

@@ -23,17 +23,6 @@ func main() {
 				Usage:   "houtput format (default: 'stylish')",
 				Value:   "stylish",
 			},
-			/*
-				&cli.BoolFlag{
-					Name:    "all",
-					Aliases: []string{"a"},
-					Usage:   "include hidden files and directories",
-				},
-				&cli.BoolFlag{
-					Name:    "recursive",
-					Aliases: []string{"r"},
-					Usage:   "recursive size of directories",
-				},*/
 		},
 
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -48,36 +37,28 @@ func main() {
 				//return nil
 			}
 
+			format := cmd.String("format")
 			file1 := args[0]
 			file2 := args[1]
-			data01, err := gendiff.ParceFile(file1)
-			if err != nil {
-				return err
-			}
-			data02, err := gendiff.ParceFile(file2)
-			if err != nil {
-				return err
-			}
-
-			fmt.Println(data01)
-			fmt.Println(data02)
-			diff := gendiff.GendDiff03(data01, data02)
-
-			fmt.Println("Финальный ДИФФ")
-			fmt.Println(diff)
-
 			/*
-				format := cmd.Bool("format")
-				//isAll := cmd.Bool("all")
-				//isRecursive := cmd.Bool("recursive")
-
-				size, err := si.GetPathSize(args[0], isRecursive, isHuman, isAll)
+				data01, err := gendiff.ParceFile(file1)
 				if err != nil {
 					return err
 				}
-
-				fmt.Println(size)
+				data02, err := gendiff.ParceFile(file2)
+				if err != nil {
+					return err
+				}
 			*/
+
+			diff, err := gendiff.GendDiff(file1, file2, format)
+
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			fmt.Println(diff)
+
 			return nil
 		},
 	}
