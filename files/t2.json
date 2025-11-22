@@ -1,16 +1,5 @@
 {
-    "Viktor": 99111,
-    "abloak": "BIG2",
-    "common": {
-        "setting1": "Value 54",
-        "setting2": 200,
-        "setting3": false,
-        "setting6": {
-            "key": "value233",
-            "doge": {
-            "wow": ""
-            }
-            }
-    }
+"group1": {
+  "nest": "str"
 }
- 
+}

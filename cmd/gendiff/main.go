@@ -61,7 +61,7 @@ func main() {
 
 			fmt.Println(data01)
 			fmt.Println(data02)
-			diff := gendiff.GendDiff02(data01, data02)
+			diff := gendiff.GendDiff03(data01, data02)
 
 			fmt.Println("Финальный ДИФФ")
 			fmt.Println(diff)

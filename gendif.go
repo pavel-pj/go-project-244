@@ -51,6 +51,41 @@ func ParceFile(path string) (map[string]interface{}, error) {
 
 }
 
+/*
+func GendDiff02(file01, file02 map[string]interface{}) []DiffItem {
+
+		result := make(map[string]interface{})
+
+		//merge
+		result1 := mergeRecursive(result, file01)
+		result2 := mergeRecursive(result1, file02)
+
+
+		result3 := getUsefulFormat(result2)
+		result4 := getSorted(result3)
+
+		result5 := differ(result4, file01, file02)
+
+		return result5
+	}
+*/
+func GendDiff03(file01, file02 map[string]interface{}) []DiffItem {
+
+	result := []DiffItem{}
+
+	//merge
+	result1 := mergeRecursive2(result, file01)
+	result2 := mergeRecursive2(result1, file02)
+
+	//result3 := getUsefulFormat(result2)
+	result3 := getSorted(result2)
+	return result3
+
+	//result5 := differ(result4, file01, file02)
+
+	//return result5
+}
+
 type DiffItem struct {
 	key      string
 	value    []interface{}
@@ -58,57 +93,119 @@ type DiffItem struct {
 	children []DiffItem
 }
 
-func GendDiff02(file01, file02 map[string]interface{}) []DiffItem {
+func mergeRecursive2(result []DiffItem, file map[string]interface{}) []DiffItem {
+	for key, value := range file {
 
-	result := make(map[string]interface{})
+		item := getDiffItem(result, key)
+		//==============================================================================
+		// Обработка простых значений
+		if !isMap(value) {
+			//если ключ существует, те был добавлен из первого файла, добавляем в значение  существующий слайс
+			if item != nil && len(item.children) == 0 {
 
-	//merge
-	result1 := mergeRecursive(result, file01)
-	result2 := mergeRecursive(result1, file02)
-	result3 := getUsefulFormat(result2)
-	result4 := getSorted(result3)
+				//могут быть одинаковые ключи для простого и вложенного знчаения
+				//existingSlice := result.value.([]interface{})
+				if item.value[0] != value {
+					item.value = append(item.value, saveCorrectValues(value))
+				}
+				// Если значения одинаковые - оставляем срез как есть
+				continue
+			}
 
-	result5 := differ(result4, file01, file02)
+			// Ключа нет в результате - создаем срез с одним значением
+			result = append(result, DiffItem{
+				key:      key,
+				value:    []interface{}{saveCorrectValues(value)},
+				result:   "",
+				children: []DiffItem{},
+			})
 
-	return result5
+			continue
+
+		}
+		//==============================================================================
+		// проверяем вложенные данные
+
+		nestedMap := value.(map[string]interface{})
+		if item != nil && len(item.children) > 0 {
+			// Если такой ключ с вложенным значением уже существуе
+			item.children = mergeRecursive2(item.children, nestedMap)
+			continue
+		}
+
+		//Если папка не существует, создаем ее
+		nestedChilds := mergeRecursive2([]DiffItem{}, nestedMap)
+		result = append(result, DiffItem{
+			key:      key,
+			value:    []interface{}{},
+			result:   "",
+			children: nestedChilds,
+		})
+
+	}
+
+	return result
+}
+
+func getDiffItem(result []DiffItem, key string) *DiffItem {
+	for i := range result {
+		if result[i].key == key {
+			return &result[i]
+		}
+	}
+	return nil
 }
 
 /*
-	func mergeRecursive(result map[string]interface{}, file map[string]interface{}) map[string]interface{} {
-		for key, value := range file {
-			if !isMap(value) {
+//Это решение невозможно, так как невозможно чтобы в map было два одинаковых ключа
+//Даже не рассматривать этот вариант
 
-				// Обработка простых значений
-				if existedValue, ok := result[key]; ok {
-					// Если ключ уже существует - добавляем значение в срез
-					existingSlice := existedValue.([]interface{})
-					if existingSlice[0] != value {
-						result[key] = append(existingSlice, value)
-					}
-					// Если значения одинаковые - оставляем срез как есть
-				} else {
-					// Ключа нет в результате - создаем срез с одним значением
-					result[key] = []interface{}{value}
-				}
+func mergeRecursive(result map[string]interface{}, file map[string]interface{}) map[string]interface{} {
+	for key, value := range file {
 
-			} else {
-				// Handle nested map
-				if existing, exists := result[key]; exists && isMap(existing) {
-					// Recursively merge into existing map
-					existingMap := existing.(map[string]interface{})
-					mergeRecursive(existingMap, value.(map[string]interface{}))
-				} else {
-					// Create new nested map
-					nestedResult := make(map[string]interface{})
-					mergeRecursive(nestedResult, value.(map[string]interface{}))
-					result[key] = nestedResult
+		//==============================================================================
+		// Обработка простых значений
+		if !isMap(value) {
+			//если ключ существует, те был добавлен из первого файла, добавляем в значение  существующий слайс
+			if existedValue, ok := result[key]; ok && !isMap(existedValue) {
+
+				//могут быть одинаковые ключи для простого и вложенного знчаения
+				existingSlice := existedValue.([]interface{})
+				if existingSlice[0] != value {
+					result[key] = append(existingSlice, saveCorrectValues(value))
 				}
+				// Если значения одинаковые - оставляем срез как есть
+				continue
 			}
+
+			// Ключа нет в результате - создаем срез с одним значением
+			result[key] = []interface{}{value}
+
+			continue
+
+		}
+		//==============================================================================
+		// проверяем вложенные данные
+
+		if existedValue, ok := result[key]; ok && isMap(value) {
+
+			// Если такой ключ с вложенным значением уже существуе
+			existingMap := existedValue.(map[string]interface{})
+			mergeRecursive(existingMap, value.(map[string]interface{}))
+			continue
 		}
 
-		return result
+		//Если папка не существует, создаем ее
+		nestedResult := make(map[string]interface{})
+		mergeRecursive(nestedResult, value.(map[string]interface{}))
+		result[key] = nestedResult
+
 	}
+
+	return result
+}
 */
+/*
 func mergeRecursive(result map[string]interface{}, file map[string]interface{}) map[string]interface{} {
 	for key, value := range file {
 		if !isMap(value) {
@@ -170,6 +267,7 @@ func mergeRecursive(result map[string]interface{}, file map[string]interface{}) 
 	}
 	return result
 }
+*/
 
 func isMap(value interface{}) bool {
 
@@ -179,33 +277,41 @@ func isMap(value interface{}) bool {
 	return false
 }
 
-func getUsefulFormat(rawArray map[string]interface{}) []DiffItem {
-	sortedDiff := []DiffItem{}
-
-	for key, value := range rawArray {
-		if slice, ok := value.([]interface{}); ok {
-			// Простой случай - массив значений
-			sortedDiff = append(sortedDiff, DiffItem{
-				key:    key,
-				value:  slice,
-				result: "",
-			})
-		} else {
-			// Рекурсивный случай - вложенная map
-			nestedMap := value.(map[string]interface{})
-			nestedItems := getUsefulFormat(nestedMap)
-			sortedDiff = append(sortedDiff, DiffItem{
-				key:      key,
-				value:    nil, // или можно сделать []interface{}{}
-				result:   "",
-				children: nestedItems, // сохраняем вложенные элементы
-			})
-		}
+func saveCorrectValues(value interface{}) interface{} {
+	if value == nil {
+		return "null"
 	}
-
-	return sortedDiff
+	return value
 }
 
+/*
+	func getUsefulFormat(rawArray map[string]interface{}) []DiffItem {
+		sortedDiff := []DiffItem{}
+
+		for key, value := range rawArray {
+			if slice, ok := value.([]interface{}); ok {
+				// Простой случай
+				sortedDiff = append(sortedDiff, DiffItem{
+					key:    key,
+					value:  slice,
+					result: "",
+				})
+			} else {
+				// Рекурсивный случай
+				nestedMap := value.(map[string]interface{})
+				nestedItems := getUsefulFormat(nestedMap)
+				sortedDiff = append(sortedDiff, DiffItem{
+					key:      key,
+					value:    nil,
+					result:   "",
+					children: nestedItems,
+				})
+			}
+		}
+
+		return sortedDiff
+	}
+*/
 func getSorted(diff []DiffItem) []DiffItem {
 
 	// Сортируем текущий уровень
