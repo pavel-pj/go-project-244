@@ -45,6 +45,10 @@ func parceFile(path string) (map[string]interface{}, error) {
 		if err := yaml.Unmarshal(data, &result); err != nil {
 			return nil, fmt.Errorf("not a YAML array or parsing error: %w", err)
 		}
+	case "yaml":
+		if err := yaml.Unmarshal(data, &result); err != nil {
+			return nil, fmt.Errorf("not a YAML array or parsing error: %w", err)
+		}
 
 	}
 
@@ -67,13 +71,18 @@ func GendDiff(file01, file02, format string) (string, error) {
 	result := []DiffItem{}
 
 	//merge
-	result1 := mergeRecursive(result, data01)
-	result2 := mergeRecursive(result1, data02)
-	result3 := getSorted(result2)
-	//compare
-	result4 := differ(result3, data01, data02)
-	//format
-	return formater(result4, format), nil
+	result1 := mergeRecursive(result, data01, "")
+	result2 := mergeRecursive(result1, data02, "")
+
+	fmt.Println(result2)
+	return "", nil
+	/*
+		result3 := getSorted(result2)
+		//compare
+		result4 := differ(result3, data01, data02)
+		//format
+		return formater(result4, format), nil
+	*/
 }
 
 type DiffItem struct {
@@ -81,11 +90,15 @@ type DiffItem struct {
 	value    []interface{}
 	result   string
 	children []DiffItem
+	path     string
 }
 
-func mergeRecursive(result []DiffItem, file map[string]interface{}) []DiffItem {
+func mergeRecursive(result []DiffItem, file map[string]interface{}, path string) []DiffItem {
 	for key, value := range file {
-
+		curPath := key
+		if len(path) > 0 {
+			curPath = path + "." + key
+		}
 		item := getDiffItem(result, key)
 		//==============================================================================
 		// Обработка простых значений
@@ -108,6 +121,7 @@ func mergeRecursive(result []DiffItem, file map[string]interface{}) []DiffItem {
 				value:    []interface{}{saveCorrectValues(value)},
 				result:   "",
 				children: []DiffItem{},
+				path:     curPath,
 			})
 
 			continue
@@ -119,17 +133,18 @@ func mergeRecursive(result []DiffItem, file map[string]interface{}) []DiffItem {
 		nestedMap := value.(map[string]interface{})
 		if item != nil && len(item.children) > 0 {
 			// Если такой ключ с вложенным значением уже существуе
-			item.children = mergeRecursive(item.children, nestedMap)
+			item.children = mergeRecursive(item.children, nestedMap, curPath)
 			continue
 		}
 
 		//Если папка не существует, создаем ее
-		nestedChilds := mergeRecursive([]DiffItem{}, nestedMap)
+		nestedChilds := mergeRecursive([]DiffItem{}, nestedMap, curPath)
 		result = append(result, DiffItem{
 			key:      key,
 			value:    []interface{}{},
 			result:   "",
 			children: nestedChilds,
+			path:     curPath,
 		})
 
 	}
@@ -231,17 +246,17 @@ func formater(diff []DiffItem, format string) string {
 
 	level := 0
 	switch format {
-	case "AAAA":
+	case "plain":
 
-		return "{\n" + recursiveFormat(diff, level) + "}\n"
+		return formatPlain(diff)
 	default:
-		return "{\n" + recursiveFormat(diff, level) + "}\n"
+		return "{\n" + formatStylish(diff, level) + "}\n"
 
 	}
 
 }
 
-func recursiveFormat(diff []DiffItem, curLevel int) string {
+func formatStylish(diff []DiffItem, curLevel int) string {
 
 	step := 4
 	smb := " "
@@ -264,7 +279,7 @@ func recursiveFormat(diff []DiffItem, curLevel int) string {
 			indent = strings.Repeat(smb, curLevel*step)
 
 			result += indent + getSymbol(r) + r.key + ": {\n"
-			result += recursiveFormat(r.children, curLevel+1)
+			result += formatStylish(r.children, curLevel+1)
 			result += indent + strings.Repeat(smb, 2) + "}\n"
 		}
 
@@ -299,4 +314,39 @@ func getValue(value interface{}) string {
 	default:
 		return fmt.Sprintf("%v", v)
 	}
+}
+
+func formatPlain(diff []DiffItem) string {
+	result := ""
+	/*
+		for _, r := range diff {
+
+			switch r.result {
+			case "deleted":
+				result += "Property '" + r.path + "' was removed\n"
+			case "new":
+				value := ""
+				if len(r.children) > 0 {
+					value1 = "[complex value]"
+				} else {
+					value1 = getValue(r.value[0])
+				}
+				result += "Property '" + r.path + "' was added with value: " + value + "\n"
+			case "updated":
+				if len(r.children) == 0 {
+					result += "Property '" + r.path + "' was updated. From " + r.value[0] + " to " + r.value[1] + "\n"
+					continue
+				}
+				result += "Property '" + r.path + "' was updated. From " + r.value[0] + " to " + r.value[1] + "\n"
+
+			default:
+				result += ""
+			}
+
+			if len(r.children) > 0 {
+				result += formatPlain(r.children)
+			}
+
+		}*/
+	return result
 }
