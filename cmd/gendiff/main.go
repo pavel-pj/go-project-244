@@ -14,10 +14,6 @@ import (
 
 func main() {
 
-	//var test []interface{}
-	//test = []interface{}{123, []string{"vase", "rrr"}}
-	//fmt.Println(test[])
-
 	cmd := &cli.Command{
 		Name:      "gendiff",
 		Usage:     "Compares two configuration files and shows a difference.",
@@ -37,7 +33,7 @@ func main() {
 
 			if len(args) < 2 {
 				return errors.New("error: requires exactly 2 file paths\nExample: gendiff file1.json file2.json \nIf you want to see help : gendiff -h")
-				//return nil
+
 			}
 
 			format := cmd.String("format")

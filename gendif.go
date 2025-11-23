@@ -4,7 +4,6 @@ import (
 	"code/formatters"
 	"code/parser"
 	"code/types"
-	"fmt"
 	"sort"
 	"strings"
 )
@@ -27,14 +26,9 @@ func GendDiff(file01, file02, format string) (string, error) {
 	result1 := mergeRecursive(result, data01, "")
 	result2 := mergeRecursive(result1, data02, "")
 
-	//fmt.Println(result2)
-	//return "", nil
-
 	result3 := getSorted(result2)
 	//compare
 	result4 := differ(result3, data01, data02)
-	fmt.Println(result4)
-	fmt.Println(" ")
 	//format
 	return formatters.Formater(result4, format), nil
 
