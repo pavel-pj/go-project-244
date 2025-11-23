@@ -7,8 +7,13 @@ import (
 
 func formatJson(diff []types.DiffItem) string {
 
-	// Convert struct to JSON bytes
-	jsonData, err := json.Marshal(diff)
+	result := struct {
+		Diff []types.DiffItem `json:"diff"`
+	}{
+		Diff: diff,
+	}
+
+	jsonData, err := json.Marshal(result)
 	if err != nil {
 		panic(err)
 	}
