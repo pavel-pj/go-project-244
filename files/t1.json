@@ -1,3 +1,10 @@
 {
-  "nest": "str"
+"common": {
+  "setting6": {
+    "key": "value",
+    "doge": {
+      "wow": ""
+    }
+  }
+}
 }

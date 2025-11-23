@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -194,15 +193,6 @@ func isMap(value interface{}) bool {
 	return false
 }
 
-/*
-func saveCorrectValues(value interface{}) interface{} {
-	if value == nil {
-		return "null"
-	}
-	return value
-}
-*/
-
 func getSorted(diff []DiffItem) []DiffItem {
 
 	// Сортируем текущий уровень
@@ -274,8 +264,9 @@ func formater(diff []DiffItem, format string) string {
 	level := 0
 	switch format {
 	case "plain":
-
 		return formatPlain(diff)
+	case "stylish":
+		return "{\n" + formatStylish(diff, level) + "}\n"
 	default:
 		return "{\n" + formatStylish(diff, level) + "}\n"
 
@@ -289,42 +280,47 @@ func formatStylish(diff []DiffItem, curLevel int) string {
 	smb := " "
 	indent := ""
 	result := ""
+	indent = strings.Repeat(smb, curLevel*step)
 	for _, r := range diff {
 		//1
-		//Простые значений Добавлено/Удалено
+		//Простые значений new/added
 		if len(r.value) == 1 {
-			indent = strings.Repeat(smb, curLevel*step) + getSymbol(r)
-			result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
+
+			result += indent + getSymbol(r) + r.key + ": " + getValue(r.value[0]) + "\n"
 			continue
 		}
 
 		//2.
-		//Обновлено для простых и рекурсивных значений
+		//updated простых и рекурсивных значений
 		if len(r.value) == 2 {
-			//result += "ВЛОЖЕННАЯ \n"
 
-			if reflect.TypeOf(r.value[0]) != reflect.TypeOf([]DiffItem{}) {
-				indent = strings.Repeat(smb, curLevel*step) + "- "
-
-				result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
-
-			}
-			if reflect.TypeOf(r.value[1]) != reflect.TypeOf([]DiffItem{}) {
-
-				indent = strings.Repeat(smb, curLevel*step) + "+ "
-
-				result += indent + r.key + ": " + getValue(r.value[1]) + "\n"
+			//Для обновления вручную задаем знаки и отступы
+			if nestedDiff, ok := r.value[0].([]DiffItem); ok {
+				//если первый элемент ! нода
+				result += indent + "- " + r.key + ": {\n" + formatStylish(nestedDiff, curLevel+1)
+				result += indent + getSymbol(r) + "}\n"
+			} else {
+				//если первое значение - просто тип
+				result += indent + "- " + r.key + ": " + getValue(r.value[0]) + "\n"
 			}
 
-			//indent = strings.Repeat(smb, curLevel*step) + getSymbol(r)
-			//result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
+			if nestedDiff, ok := r.value[1].([]DiffItem); ok {
+				//если первый элемент ! нода
+				result += indent + "- " + r.key + ": {\n" + formatStylish(nestedDiff, curLevel+1)
+				result += indent + getSymbol(r) + "}\n"
+			} else {
+				//если первое значение - просто тип
+				result += indent + "- " + r.key + ": " + getValue(r.value[1]) + "\n"
+			}
+
 			continue
 		}
 		//3 для вложенных элементов
 		if len(r.children) > 0 {
 			//Для вложенных
-			indent = strings.Repeat(smb, curLevel*step)
+			fmt.Println(r.key)
 
+			indent = strings.Repeat(smb, curLevel*step)
 			result += indent + getSymbol(r) + r.key + ": {\n"
 			result += formatStylish(r.children, curLevel+1)
 			result += indent + strings.Repeat(smb, 2) + "}\n"
@@ -365,35 +361,47 @@ func getValue(value interface{}) string {
 
 func formatPlain(diff []DiffItem) string {
 	result := ""
-	/*
-		for _, r := range diff {
+	value1 := ""
+	value2 := ""
+	for _, r := range diff {
 
-			switch r.result {
-			case "deleted":
-				result += "Property '" + r.path + "' was removed\n"
-			case "new":
-				value := ""
-				if len(r.children) > 0 {
-					value1 = "[complex value]"
-				} else {
-					value1 = getValue(r.value[0])
-				}
-				result += "Property '" + r.path + "' was added with value: " + value + "\n"
-			case "updated":
-				if len(r.children) == 0 {
-					result += "Property '" + r.path + "' was updated. From " + r.value[0] + " to " + r.value[1] + "\n"
-					continue
-				}
-				result += "Property '" + r.path + "' was updated. From " + r.value[0] + " to " + r.value[1] + "\n"
-
-			default:
-				result += ""
-			}
+		switch r.result {
+		case "deleted":
+			result += "Property '" + r.path + "' was removed\n"
+		case "new":
 
 			if len(r.children) > 0 {
-				result += formatPlain(r.children)
+				value1 = "[complex value]"
+			} else {
+				value1 = getValue(r.value[0])
+			}
+			result += "Property '" + r.path + "' was added with value: " + value1 + "\n"
+
+		case "updated":
+
+			if _, ok := r.value[0].([]DiffItem); ok {
+				value1 = "[complex value]"
+			} else {
+				value1 = getValue(r.value[0])
 			}
 
-		}*/
+			if _, ok := r.value[1].([]DiffItem); ok {
+				value2 = "[complex value]"
+			} else {
+				value2 = getValue(r.value[1])
+
+			}
+
+			result += "Property '" + r.path + "' was updated. From " + value1 + " to " + value2 + "\n"
+
+		default:
+			result += ""
+		}
+
+		if len(r.children) > 0 {
+			result += formatPlain(r.children)
+		}
+
+	}
 	return result
 }

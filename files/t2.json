@@ -1,6 +1,11 @@
 {
-  "nest": {
-    "key": "value"
+"common": {
+  "setting6": {
+    "key": "value",
+    "ops": "vops",
+    "doge": {
+      "wow": "so much"
+    }
   }
- 
+}
 }
