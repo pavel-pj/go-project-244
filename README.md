@@ -1,5 +1,7 @@
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/pavel-pj/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/pavel-pj/go-project-244/actions)
+### Project tests and linter status:
+[![tests & lint](https://github.com/pavel-pj/go-project-244/actions/workflows/main.yml/badge.svg)](https://github.com/pavel-pj/go-project-244/actions/workflows/main.yml)
 
 
 # GOlang Console utilite "GenDiff" 
