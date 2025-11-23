@@ -40,7 +40,7 @@ func main() {
 			file1 := args[0]
 			file2 := args[1]
 
-			diff, err := gendiff.GendDiff(file1, file2, format)
+			diff, err := gendiff.GenDiff(file1, file2, format)
 
 			if err != nil {
 				fmt.Println(err)

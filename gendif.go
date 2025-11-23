@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func GendDiff(file01, file02, format string) (string, error) {
+func GenDiff(file01, file02, format string) (string, error) {
 
 	//Парсим файлы
 	data01, err := parser.ParceFile(file01)

@@ -24,7 +24,7 @@ func TestGenDiffTest(t *testing.T) {
 	want := string(data)
 	//fmt.Println(want)
 
-	got, err := GendDiff("files/file1.json", "files/file2.json", "stylish")
+	got, err := GenDiff("files/file1.json", "files/file2.json", "stylish")
 	if err != nil {
 		t.Error(err)
 	}
