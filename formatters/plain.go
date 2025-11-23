@@ -1,16 +1,26 @@
 package formatters
 
-import "code/types"
+import (
+	"code/types"
+	"strings"
+)
 
 func formatPlain(diff []types.DiffItem) string {
-	result := ""
+
+	result := getFormatArray(diff)
+	return strings.Join(result, "\n")
+}
+
+func getFormatArray(diff []types.DiffItem) []string {
+	result := []string{}
 	value1 := ""
 	value2 := ""
 	for _, r := range diff {
 
 		switch r.Result {
 		case "deleted":
-			result += "Property '" + r.Path + "' was removed\n"
+			result = append(result, "Property '"+r.Path+"' was removed")
+
 		case "new":
 
 			if len(r.Children) > 0 {
@@ -18,7 +28,7 @@ func formatPlain(diff []types.DiffItem) string {
 			} else {
 				value1 = getValue(r.Value[0], "plain")
 			}
-			result += "Property '" + r.Path + "' was added with value: " + value1 + "\n"
+			result = append(result, "Property '"+r.Path+"' was added with value: "+value1)
 
 		case "updated":
 
@@ -35,16 +45,17 @@ func formatPlain(diff []types.DiffItem) string {
 
 			}
 
-			result += "Property '" + r.Path + "' was updated. From " + value1 + " to " + value2 + "\n"
+			result = append(result, "Property '"+r.Path+"' was updated. From "+value1+" to "+value2)
 
 		default:
-			result += ""
+			//result = append(result, []string{})
 		}
 
 		if len(r.Children) > 0 {
-			result += formatPlain(r.Children)
+			result = append(result, getFormatArray(r.Children)...)
 		}
 
 	}
+
 	return result
 }
