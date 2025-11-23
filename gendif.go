@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -74,15 +75,17 @@ func GendDiff(file01, file02, format string) (string, error) {
 	result1 := mergeRecursive(result, data01, "")
 	result2 := mergeRecursive(result1, data02, "")
 
-	fmt.Println(result2)
-	return "", nil
-	/*
-		result3 := getSorted(result2)
-		//compare
-		result4 := differ(result3, data01, data02)
-		//format
-		return formater(result4, format), nil
-	*/
+	//fmt.Println(result2)
+	//return "", nil
+
+	result3 := getSorted(result2)
+	//compare
+	result4 := differ(result3, data01, data02)
+	fmt.Println(result4)
+	fmt.Println(" ")
+	//format
+	return formater(result4, format), nil
+
 }
 
 type DiffItem struct {
@@ -103,42 +106,63 @@ func mergeRecursive(result []DiffItem, file map[string]interface{}, path string)
 		//==============================================================================
 		// Обработка простых значений
 		if !isMap(value) {
-			//если ключ существует, те был добавлен из первого файла, добавляем в значение  существующий слайс
-			if item != nil && len(item.children) == 0 {
 
-				//могут быть одинаковые ключи для простого и вложенного знчаения
-				//existingSlice := result.value.([]interface{})
-				if item.value[0] != value {
-					item.value = append(item.value, saveCorrectValues(value))
-				}
-				// Если значения одинаковые - оставляем срез как есть
+			//1.
+			// если ключ существует, НО был стуктурой
+			if item != nil && len(item.children) > 0 {
+
+				item.value = append(item.value, item.children)
+				item.value = append(item.value, value)
+				//удалим стукруту с chilld , она уже не потребуется, все значения old & new в слайсе
+				item.children = []DiffItem{}
+				continue
+			}
+			//2.
+			// если ключ существует, НО c плоской стуктурой
+			if item != nil && len(item.children) == 0 && item.value[0] != value {
+				item.value = append(item.value, value)
+				continue
+			}
+			//3.
+			// если ключ существует и он равен текущему
+			if item != nil && item.value[0] == value {
 				continue
 			}
 
-			// Ключа нет в результате - создаем срез с одним значением
+			//4.
+			//Ключа нет в результате - создаем срез с одним значением
 			result = append(result, DiffItem{
 				key:      key,
-				value:    []interface{}{saveCorrectValues(value)},
+				value:    []interface{}{value},
 				result:   "",
 				children: []DiffItem{},
 				path:     curPath,
 			})
 
 			continue
-
 		}
 		//==============================================================================
 		// проверяем вложенные данные
 
 		nestedMap := value.(map[string]interface{})
+		//1.
+		// Если такой ключ с вложенным значением уже существует
 		if item != nil && len(item.children) > 0 {
-			// Если такой ключ с вложенным значением уже существуе
 			item.children = mergeRecursive(item.children, nestedMap, curPath)
 			continue
 		}
 
-		//Если папка не существует, создаем ее
+		//получаем вложенные папки
 		nestedChilds := mergeRecursive([]DiffItem{}, nestedMap, curPath)
+
+		//2.
+		//Если такой ключ существует, но значение - простое
+		if item != nil && len(item.children) == 0 && len(item.value) > 0 {
+			item.value = append(item.value, nestedChilds)
+			continue
+		}
+
+		//Если папка не существует, создаем ее
 		result = append(result, DiffItem{
 			key:      key,
 			value:    []interface{}{},
@@ -155,6 +179,7 @@ func mergeRecursive(result []DiffItem, file map[string]interface{}, path string)
 func getDiffItem(result []DiffItem, key string) *DiffItem {
 	for i := range result {
 		if result[i].key == key {
+
 			return &result[i]
 		}
 	}
@@ -169,12 +194,14 @@ func isMap(value interface{}) bool {
 	return false
 }
 
+/*
 func saveCorrectValues(value interface{}) interface{} {
 	if value == nil {
 		return "null"
 	}
 	return value
 }
+*/
 
 func getSorted(diff []DiffItem) []DiffItem {
 
@@ -263,17 +290,37 @@ func formatStylish(diff []DiffItem, curLevel int) string {
 	indent := ""
 	result := ""
 	for _, r := range diff {
-		//для простых значений
+		//1
+		//Простые значений Добавлено/Удалено
 		if len(r.value) == 1 {
 			indent = strings.Repeat(smb, curLevel*step) + getSymbol(r)
 			result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
 			continue
 		}
+
+		//2.
+		//Обновлено для простых и рекурсивных значений
 		if len(r.value) == 2 {
-			indent = strings.Repeat(smb, curLevel*step) + getSymbol(r)
-			result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
+			//result += "ВЛОЖЕННАЯ \n"
+
+			if reflect.TypeOf(r.value[0]) != reflect.TypeOf([]DiffItem{}) {
+				indent = strings.Repeat(smb, curLevel*step) + "- "
+
+				result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
+
+			}
+			if reflect.TypeOf(r.value[1]) != reflect.TypeOf([]DiffItem{}) {
+
+				indent = strings.Repeat(smb, curLevel*step) + "+ "
+
+				result += indent + r.key + ": " + getValue(r.value[1]) + "\n"
+			}
+
+			//indent = strings.Repeat(smb, curLevel*step) + getSymbol(r)
+			//result += indent + r.key + ": " + getValue(r.value[0]) + "\n"
 			continue
 		}
+		//3 для вложенных элементов
 		if len(r.children) > 0 {
 			//Для вложенных
 			indent = strings.Repeat(smb, curLevel*step)
