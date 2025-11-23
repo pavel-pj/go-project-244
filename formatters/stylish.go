@@ -11,7 +11,7 @@ func formatStylish(diff []types.DiffItem, curLevel int) string {
 	smb := " "
 	indent := ""
 	result := ""
-	indent = strings.Repeat(smb, curLevel*step)
+	indent = strings.Repeat(smb, curLevel*step) + "  "
 	for _, r := range diff {
 		//1
 		//Простые значений new/added
@@ -51,7 +51,7 @@ func formatStylish(diff []types.DiffItem, curLevel int) string {
 			//Для вложенных
 			//fmt.Println(r.Key)
 
-			indent = strings.Repeat(smb, curLevel*step)
+			indent = strings.Repeat(smb, curLevel*step) + "  "
 			result += indent + getSymbol(r) + r.Key + ": {\n"
 			result += formatStylish(r.Children, curLevel+1)
 			result += indent + strings.Repeat(smb, 2) + "}\n"
