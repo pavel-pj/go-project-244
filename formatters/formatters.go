@@ -13,11 +13,11 @@ func Formater(diff []types.DiffItem, format string) string {
 	case "plain":
 		return formatPlain(diff)
 	case "stylish":
-		return "{\n" + formatStylish(diff, level) + "}\n"
+		return "{\n" + formatStylish(diff, level) + "}"
 	case "json":
 		return formatJson(diff)
 	default:
-		return "{\n" + formatStylish(diff, level) + "}\n"
+		return "{\n" + formatStylish(diff, level) + "}"
 
 	}
 
