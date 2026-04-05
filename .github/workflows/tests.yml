@@ -1,0 +1,36 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+ 
+jobs:
+   
+  build-and-lint:
+    name: Build and Lint
+    runs-on: ubuntu-latest
+ 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: 1.24.0
+        cache: true
+
+    - name: Build
+      run: |
+        go build -o bin/gendiff ./cmd/gendiff	
+ 
+    - name: Verify binary
+      run: |
+        file 	bin/gendiff
+        echo "Binary size: $(du -h 	bin/gendiff | cut -f1)"
+
+    - name: Test
+      run: |
+        make test
+        echo "✅ Tests completed"
+ 
