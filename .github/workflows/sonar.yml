@@ -38,8 +38,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=unlaudd_go-project-244
-            -Dsonar.organization=unlaudd
+            -Dsonar.projectKey=go-project-244
+            -Dsonar.organization=Lion-King
             -Dsonar.sources=.
             -Dsonar.exclusions=**/*_test.go,**/testdata/**,**/vendor/**,**/bin/**
             -Dsonar.go.coverage.reportPaths=coverage.out
