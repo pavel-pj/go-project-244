@@ -35,7 +35,7 @@ jobs:
         run: |
           go install github.com/boumenot/gocover-cobertura@latest
           ~/go/bin/gocover-cobertura < coverage.out > coverage.xml
-      # ----------------------------------
+      # ---------------------------------
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v7   # Актуальная версия [citation:1]
@@ -52,3 +52,4 @@ jobs:
             -Dsonar.exclusions=**/*_test.go,**/vendor/**
             -Dsonar.go.coverage.reports=coverage.xml
             -Dsonar.go.tests.reports=test-report.json
+
