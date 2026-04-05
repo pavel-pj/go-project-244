@@ -1,53 +1,51 @@
-name: SonarQube Analysis
+name: CI
+
 on:
   push:
-    branches: [ "main" ]      # Анализ при пуше в main
+    branches: [ main, master ]
   pull_request:
-    branches: [ "main" ]      # Анализ при создании Pull Request
-  workflow_dispatch:          # Ручной запуск
+    branches: [ main, master ]
 
 jobs:
-  sonarqube:
-    name: Analyze with SonarQube
+  test:
+    name: Test & Lint
     runs-on: ubuntu-latest
-    permissions:              # Разрешения для комментариев в PR (если нужно)
-      pull-requests: write
-      contents: read
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
-          fetch-depth: 0       # Отключаем shallow clone (нужно для анализа) [citation:1]
+          fetch-depth: 0
 
-      # --- ЭТОТ БЛОК НУЖЕН ТЕБЕ (Go) ---
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
         with:
-          go-version: '1.24'   # Версия Go из твоего go.mod
+          go-version: '1.21'
+          cache: true
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@8564da7cb3c6866ed1da648ca8f00a258ef0c802
+        with:
+          version: v1.64
+          args: --timeout=5m
 
       - name: Run tests with coverage
         run: |
-          go test -coverprofile=coverage.out ./...
-          go test -json ./... > test-report.json
+            go test -v -coverprofile=coverage.out -covermode=atomic ./...
+            # Конвертируем пути из module-path в относительные
+            sed -i 's|github.com/unlaudd/go-project-244/||g' coverage.out
 
-      - name: Convert coverage to Cobertura (фикс для Community Edition)
-        run: |
-          go install github.com/boumenot/gocover-cobertura@latest
-          ~/go/bin/gocover-cobertura < coverage.out > coverage.xml
-      # ---------------------------------
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v7   # Актуальная версия [citation:1]
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@ffc3010689be73b8e5ae0c57ce35968afd7909e8
         env:
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=go-project-244
-            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=unlaudd_go-project-244
+            -Dsonar.organization=unlaudd
             -Dsonar.sources=.
-            -Dsonar.exclusions=**/*_test.go,**/vendor/**,**/files/**,**/fixtures/**,code
-            -Dsonar.go.coverage.reports=coverage.xml
-            -Dsonar.go.tests.reports=test-report.json
-
+            -Dsonar.exclusions=**/*_test.go,**/testdata/**,**/vendor/**,**/bin/**
+            -Dsonar.go.coverage.reportPaths=coverage.out
