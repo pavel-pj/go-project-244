@@ -44,9 +44,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=go-project-244-final
+            -Dsonar.projectKey=go-project-244
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-            -Dsonar.projectCreation=true
             -Dsonar.sources=.
             -Dsonar.exclusions=**/*_test.go,**/vendor/**,**/files/**,**/fixtures/**,code
             -Dsonar.go.coverage.reports=coverage.xml
