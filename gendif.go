@@ -4,6 +4,7 @@ import (
 	"code/formatters"
 	"code/parser"
 	"code/types"
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -13,11 +14,12 @@ func GenDiff(file01, file02, format string) (string, error) {
 	//Парсим файлы
 	data01, err := parser.ParceFile(file01)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parsing file %s: %w", file01, err)
 	}
+
 	data02, err := parser.ParceFile(file02)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parsing file %s: %w", file02, err)
 	}
 
 	result := []types.DiffItem{}
