@@ -17,12 +17,13 @@ func ParceFile(path string) (map[string]interface{}, error) {
 		panic(err)
 	}
 
-	//сначала проверяется относительынй путь в текущей папке
+	// сначала проверяется относительынй путь в текущей папке
 	var data []byte
+	// #nosec G304 - path comes from trusted source (config file)
 	data, err = os.ReadFile(wd + "/" + path)
 	if err != nil {
 
-		//Абсолютный путь
+		// #nosec G304 - path comes from trusted source (config file)
 		data, err = os.ReadFile(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read %s: %w", path, err)

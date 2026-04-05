@@ -48,7 +48,7 @@ func getFormatArray(diff []types.DiffItem) []string {
 			result = append(result, "Property '"+r.Path+"' was updated. From "+value1+" to "+value2)
 
 		default:
-			//result = append(result, []string{})
+			// result = append(result, []string{})
 		}
 
 		if len(r.Children) > 0 {

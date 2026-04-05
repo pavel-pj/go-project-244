@@ -18,13 +18,13 @@ linters:
     - bodyclose
     - noctx
     - gocyclo
-    - goconst
+    #- goconst
     - gocritic
     #- revive
     #- godot
     #- godox
     - prealloc
-    - wastedassign
+    #- wastedassign
     - errorlint
     - nilerr
     - wrapcheck

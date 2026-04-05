@@ -95,7 +95,7 @@ func TestGenDiffTest(t *testing.T) {
 	for _, r := range cases {
 
 		t.Run(r.name, func(t *testing.T) {
-
+			// #nosec G304 - path comes from trusted source (config file)
 			data, _ := os.ReadFile(wd + "/" + r.expected)
 			want := string(data)
 

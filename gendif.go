@@ -9,9 +9,10 @@ import (
 	"strings"
 )
 
+// Главная фукнция выполнящая сверку двух структур
 func GenDiff(file01, file02, format string) (string, error) {
 
-	//Парсим файлы
+	// Парсим файлы
 	data01, err := parser.ParceFile(file01)
 	if err != nil {
 		return "", fmt.Errorf("parsing file %s: %w", file01, err)
@@ -24,14 +25,14 @@ func GenDiff(file01, file02, format string) (string, error) {
 
 	result := []types.DiffItem{}
 
-	//merge
+	// merge
 	result1 := mergeRecursive(result, data01, "")
 	result2 := mergeRecursive(result1, data02, "")
 
 	result3 := getSorted(result2)
-	//compare
+	// compare
 	result4 := differ(result3, data01, data02)
-	//format
+	// format
 	return formatters.Formater(result4, format), nil
 
 }
@@ -43,34 +44,34 @@ func mergeRecursive(result []types.DiffItem, file map[string]interface{}, path s
 			curPath = path + "." + key
 		}
 		item := getDiffItem(result, key)
-		//==============================================================================
+		// ==============================================================================
 		// Обработка простых значений
 		if !isMap(value) {
 
-			//1.
+			// 1.
 			// если ключ существует, НО был стуктурой
 			if item != nil && len(item.Children) > 0 {
 
 				item.Value = append(item.Value, item.Children)
 				item.Value = append(item.Value, value)
-				//удалим стукруту с chilld , она уже не потребуется, все значения old & new в слайсе
+				// удалим стукруту с chilld , она уже не потребуется, все значения old & new в слайсе
 				item.Children = []types.DiffItem{}
 				continue
 			}
-			//2.
+			// 2.
 			// если ключ существует, НО c плоской стуктурой
 			if item != nil && len(item.Children) == 0 && item.Value[0] != value {
 				item.Value = append(item.Value, value)
 				continue
 			}
-			//3.
+			// 3.
 			// если ключ существует и он равен текущему
 			if item != nil && item.Value[0] == value {
 				continue
 			}
 
-			//4.
-			//Ключа нет в результате - создаем срез с одним значением
+			// 4.
+			// Ключа нет в результате - создаем срез с одним значением
 			result = append(result, types.DiffItem{
 				Key:      key,
 				Value:    []interface{}{value},
@@ -81,28 +82,28 @@ func mergeRecursive(result []types.DiffItem, file map[string]interface{}, path s
 
 			continue
 		}
-		//==============================================================================
+		// ==============================================================================
 		// проверяем вложенные данные
 
 		nestedMap := value.(map[string]interface{})
-		//1.
+		// 1.
 		// Если такой ключ с вложенным значением уже существует
 		if item != nil && len(item.Children) > 0 {
 			item.Children = mergeRecursive(item.Children, nestedMap, curPath)
 			continue
 		}
 
-		//получаем вложенные папки
+		// получаем вложенные папки
 		nestedChilds := mergeRecursive([]types.DiffItem{}, nestedMap, curPath)
 
-		//2.
-		//Если такой ключ существует, но значение - простое
+		// 2.
+		// Если такой ключ существует, но значение - простое
 		if item != nil && len(item.Children) == 0 && len(item.Value) > 0 {
 			item.Value = append(item.Value, nestedChilds)
 			continue
 		}
 
-		//Если папка не существует, создаем ее
+		// Если папка не существует, создаем ее
 		result = append(result, types.DiffItem{
 			Key:      key,
 			Value:    []interface{}{},
@@ -162,7 +163,7 @@ func differ(diff []types.DiffItem, file01 map[string]interface{}, file02 map[str
 		childMap01, ok01 := fileChild01.(map[string]interface{})
 		childMap02, ok02 := fileChild02.(map[string]interface{})
 
-		//Для вложенных структур
+		// Для вложенных структур
 		if len(diff[i].Children) > 0 {
 
 			if !inFile01 && inFile02 {
@@ -179,7 +180,7 @@ func differ(diff []types.DiffItem, file01 map[string]interface{}, file02 map[str
 			continue
 		}
 
-		//Для конечных нод
+		// Для конечных нод
 		if len(diff[i].Value) == 2 {
 			diff[i].Result = "updated"
 			continue
