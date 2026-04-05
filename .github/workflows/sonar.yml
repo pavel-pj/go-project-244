@@ -45,6 +45,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=go-project
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=.
             -Dsonar.exclusions=**/*_test.go,**/vendor/**
             -Dsonar.go.coverage.reports=coverage.xml
