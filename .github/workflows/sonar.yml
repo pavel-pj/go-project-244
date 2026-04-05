@@ -47,6 +47,7 @@ jobs:
             -Dsonar.projectKey=go-project-244
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.sources=.
+            -Dsonar.projectCreation=true
             -Dsonar.exclusions=**/*_test.go,**/vendor/**
             -Dsonar.go.coverage.reports=coverage.xml
             -Dsonar.go.tests.reports=test-report.json
