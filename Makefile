@@ -8,5 +8,8 @@ lint:
 start:
 	go run cmd/gendiff/main.go		
 build:
-	go build -o bin/gendiff ./cmd/gendiff	
-	bin/gendiff
+	go build -o bin/gendiff ./cmd/gendiff/main.go	
+	
+#--bin/gendiff
+
+#	go build -o bin/gendiff ./cmd/main.go
