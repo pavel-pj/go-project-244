@@ -3,7 +3,8 @@
 test:
 	 go test ./... 
 lint:
-	golangci-lint run
+	golangci-lint run ./...
+	
 start:
 	go run cmd/gendiff/main.go		
 build:
