@@ -1,0 +1,35 @@
+name: SonarQube Analysis
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Нужно для корректного анализа
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25'
+
+    # Генерация отчетов для SonarQube
+    - name: Generate test reports
+      run: |
+        go test -json ./... > test.out
+        go test -coverprofile=coverage.out ./...
+
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@v4
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.host.url=http://ВАШ_IP_СЕРВЕРА:9000
+          -Dsonar.go.coverage.reports=coverage.out
+          -Dsonar.go.tests.reports=test.out
