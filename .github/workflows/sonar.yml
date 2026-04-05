@@ -1,0 +1,51 @@
+name: SonarQube Analysis
+on:
+  push:
+    branches: [ "main" ]      # Анализ при пуше в main
+  pull_request:
+    branches: [ "main" ]      # Анализ при создании Pull Request
+  workflow_dispatch:          # Ручной запуск
+
+jobs:
+  sonarqube:
+    name: Analyze with SonarQube
+    runs-on: ubuntu-latest
+    permissions:              # Разрешения для комментариев в PR (если нужно)
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # Отключаем shallow clone (нужно для анализа) [citation:1]
+
+      # --- ЭТОТ БЛОК НУЖЕН ТЕБЕ (Go) ---
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'   # Версия Go из твоего go.mod
+
+      - name: Run tests with coverage
+        run: |
+          go test -coverprofile=coverage.out ./...
+          go test -json ./... > test-report.json
+
+      - name: Convert coverage to Cobertura (фикс для Community Edition)
+        run: |
+          go install github.com/boumenot/gocover-cobertura@latest
+          ~/go/bin/gocover-cobertura < coverage.out > coverage.xml
+      # ----------------------------------
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v7   # Актуальная версия [citation:1]
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=my-go-project
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/*_test.go,**/vendor/**
+            -Dsonar.go.coverage.reports=coverage.xml
+            -Dsonar.go.tests.reports=test-report.json
