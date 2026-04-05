@@ -1,4 +1,4 @@
-name: sonar
+name: test
 
 on:
   push:
@@ -15,16 +15,15 @@ jobs:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v4
       with:
-        go-version: '1.25'
+        go-version: '1.24.1'
 
     - name: Build
-      run: |
-        go build -o bin/gendiff ./cmd/gendiff	
+      run: make build
 
     - name: Test
-      run: go test -coverprofile=bin/coverage.out ./...
+      run: make test
      
     - name: SonarQube Scan
       uses: SonarSource/sonarqube-scan-action@v6
