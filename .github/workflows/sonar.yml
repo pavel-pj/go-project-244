@@ -39,7 +39,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=go-project-244
-            -Dsonar.organization=Lion-King
+            -Dsonar.organization=Lion-King240
             -Dsonar.sources=.
             -Dsonar.exclusions=**/*_test.go,**/testdata/**,**/vendor/**,**/bin/**
             -Dsonar.go.coverage.reportPaths=coverage.out
