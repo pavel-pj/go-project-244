@@ -1,9 +1,10 @@
 .PHONY: lint start build
 
 test:
-#go test ./... 
-	go test -coverprofile=coverage.out ./...
-	go tool cover -html=coverage.out -o coverage.html
+	go test ./... 
+#go test -coverprofile=coverage.out ./...  \
+#go tool cover -func=coverage.out
+
 lint:
 	golangci-lint run ./...
 	
