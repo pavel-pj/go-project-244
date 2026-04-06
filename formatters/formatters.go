@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// Функция которая преобразует Массив в нужный формат
 func Formater(diff []types.DiffItem, format string) string {
 
 	level := 0

@@ -13,12 +13,12 @@ import (
 func GenDiff(file01, file02, format string) (string, error) {
 
 	// Парсим файлы
-	data01, err := parser.ParceFile(file01)
+	data01, err := parser.ParseFile(file01)
 	if err != nil {
 		return "", fmt.Errorf("parsing file %s: %w", file01, err)
 	}
 
-	data02, err := parser.ParceFile(file02)
+	data02, err := parser.ParseFile(file02)
 	if err != nil {
 		return "", fmt.Errorf("parsing file %s: %w", file02, err)
 	}

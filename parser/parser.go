@@ -10,24 +10,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func ParceFile(path string) (map[string]interface{}, error) {
+// Парсит файл json/yaml в map
+func ParseFile(path string) (map[string]interface{}, error) {
 
-	wd, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
-
-	// сначала проверяется относительынй путь в текущей папке
-	var data []byte
 	// #nosec G304 - path comes from trusted source (config file)
-	data, err = os.ReadFile(wd + "/" + path)
+	data, err := os.ReadFile(path)
 	if err != nil {
-
-		// #nosec G304 - path comes from trusted source (config file)
-		data, err = os.ReadFile(path)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read %s: %w", path, err)
-		}
+		return nil, fmt.Errorf("failed to read %s: %w", path, err)
 	}
 
 	ext := filepath.Ext(path)
