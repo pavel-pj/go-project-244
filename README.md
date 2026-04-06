@@ -1,5 +1,7 @@
 [![Actions Status](https://github.com/pavel-pj/go-project-244/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/pavel-pj/go-project-244/actions)
 [![linter](https://github.com/pavel-pj/go-project-244/actions/workflows/linter.yml/badge.svg)](https://github.com/pavel-pj/go-project-244/actions/workflows/linter.yml)[![tests](https://github.com/pavel-pj/go-project-244/actions/workflows/tests.yml/badge.svg)](https://github.com/pavel-pj/go-project-244/actions/workflows/tests.yml)
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=pavel-pj_go-project-244)](https://sonarcloud.io/summary/new_code?id=pavel-pj_go-project-244)
+
 
 
 # GOlang Console utilite "GenDiff" 
