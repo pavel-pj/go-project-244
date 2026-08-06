@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Парсит файл json/yaml в map
+// Парсит файл json/yaml в map новый
 func ParseFile(path string) (map[string]interface{}, error) {
 
 	// #nosec G304 - path comes from trusted source (config file)
